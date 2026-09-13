@@ -1,0 +1,18 @@
+{
+  "journey-v4-front-final": {
+    "frames": 360,
+    "checkedExposureFrames": 360,
+    "uniqueFrames": 360,
+    "minMean": 35.186595780865765,
+    "maxMean": 42.650011435190706,
+    "maxMeanStep": 0.11824201620386532,
+    "maxMeanStepFrame": 2,
+    "minLit": 0.9880999228395062,
+    "minLitFrame": 326,
+    "maxWhite": 0.00022183641975308642,
+    "maxWhiteFrame": 359,
+    "meanDifference": 0.6885411830702564,
+    "maxDifference": 2.343141718106996,
+    "maxDifferenceFrame": 1
+  }
+}

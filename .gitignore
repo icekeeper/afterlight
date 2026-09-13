@@ -1,0 +1,22 @@
+# Downloaded development tools (the scripts in tools/ are source).
+/tools/zig-*/
+/tools/ffmpeg/
+/tools/*.zip
+# Generated files and local captures.
+/build/
+/dist/
+/captures/
+/frames/
+/afterlight-error.txt
+.DS_Store
+Thumbs.db
+*.obj
+*.o
+*.pdb
+*.ilk
+*.res
+*.cso
+*.lib
+*.wav
+*.bmp
+*.mp4

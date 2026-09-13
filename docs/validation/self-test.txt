@@ -1,0 +1,50 @@
+AFTERLIGHT native validation
+Adapter: AMD Radeon RX 7900 XTX
+Software: 0
+Frame 3s: mean=85.4067 lit=0.989628 render_ms=1406.76
+Frame 14s: mean=80.4491 lit=0.990678 render_ms=4.119
+Frame 24s: mean=50.7544 lit=0.999995 render_ms=5.0045
+Frame 29s: mean=39.1083 lit=1 render_ms=5.3805
+Frame 30s: mean=40.8543 lit=1 render_ms=5.4041
+Frame 31s: mean=40.1275 lit=1 render_ms=5.8128
+Frame 38s: mean=34.6729 lit=0.999989 render_ms=5.9533
+Frame 44s: mean=37.6664 lit=0.999999 render_ms=6.0535
+Frame 54s: mean=39.7515 lit=0.99992 render_ms=7.719
+Frame 60s: mean=73.6053 lit=1 render_ms=15.4296
+Frame 62s: mean=111.194 lit=1 render_ms=12.976
+Frame 64s: mean=108.472 lit=1 render_ms=5.5246
+Frame 65s: mean=82.2745 lit=1 render_ms=5.7856
+Frame 66s: mean=61.2411 lit=0.900168 render_ms=5.9918
+Frame 67s: mean=69.9051 lit=0.937076 render_ms=5.8104
+Frame 72s: mean=66.2254 lit=0.933549 render_ms=30.0723
+Frame 76s: mean=58.5246 lit=0.912842 render_ms=6.1701
+Frame 84s: mean=51.5235 lit=0.919317 render_ms=6.2065
+Frame 92s: mean=30.3378 lit=0.918319 render_ms=8.077
+Frame 100s: mean=36.2922 lit=0.999656 render_ms=9.0756
+Frame 107s: mean=47.016 lit=0.890229 render_ms=9.8741
+Frame 108s: mean=51.8152 lit=0.852344 render_ms=9.6928
+Frame 109s: mean=51.4539 lit=0.86353 render_ms=9.3156
+Frame 114s: mean=57.5941 lit=0.8856 render_ms=9.9038
+Frame 118s: mean=59.9454 lit=0.864563 render_ms=10.54
+Frame 120s: mean=60.4941 lit=0.867243 render_ms=10.3518
+Frame 123s: mean=60.6956 lit=0.870291 render_ms=10.1729
+Frame 136s: mean=68.7257 lit=0.896517 render_ms=12.0411
+Frame 140s: mean=63.914 lit=0.945 render_ms=12.9696
+Frame 143s: mean=53.2373 lit=0.983022 render_ms=13.194
+Frame 144s: mean=49.0735 lit=0.99953 render_ms=16.8639
+Frame 145s: mean=44.8635 lit=1 render_ms=19.7731
+Frame 150s: mean=38.7229 lit=0.999677 render_ms=14.8457
+Frame 156s: mean=45.4403 lit=1 render_ms=15.1652
+Frame 168s: mean=59.1822 lit=0.999986 render_ms=15.96
+Frame 177s: mean=31.8904 lit=0.928446 render_ms=16.9203
+Continuity at 66s: mean RGB difference=0.453601 / 255
+Continuity at 72s: mean RGB difference=0.345692 / 255
+Continuity at 118s: mean RGB difference=0.245316 / 255
+Continuity at 120s: mean RGB difference=0.248243 / 255
+Continuity at 150s: mean RGB difference=0.242355 / 255
+Audio: samples=15876000 peak=0.94397 rms=0.149041 clipped=0 generation_seconds=1.05363
+waveOut device: available
+Audio clock: before=0.125079 paused=0.125147 resumed=0.234512 seek=90.0831
+Deterministic seek: fragment frame 92s identical after visiting nursery at 168s
+Resolution changes: 540p and 1080p rendered; 960x600 letterboxed resize passed
+PASS
