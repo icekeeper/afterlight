@@ -1,5 +1,5 @@
 param(
-    [string]$Executable = (Join-Path $PSScriptRoot 'dist\AFTERLIGHT.exe'),
+    [string]$Executable = (Join-Path $PSScriptRoot 'build\AFTERLIGHT-unpacked.exe'),
     [switch]$Summary
 )
 $ErrorActionPreference = 'Stop'
@@ -13,6 +13,10 @@ $optional = $peOffset + 24
 $optionalSize = U16 ($peOffset + 20)
 if ((U16 $optional) -ne 0x20b) { throw 'Expected a PE32+ executable.' }
 $sections = $optional + $optionalSize
+for ($sectionIndex = 0; $sectionIndex -lt $sectionCount; $sectionIndex++) {
+    $name = [Text.Encoding]::ASCII.GetString($bytes, $sections + $sectionIndex * 40, 8).Trim([char]0)
+    if ($name -eq 'UPX0') { throw 'Audit the ordinary executable before packing: -Executable .\build\AFTERLIGHT-unpacked.exe. A packed import table describes only its loader.' }
+}
 function OffsetFromRva([uint32]$rva) {
     for ($sectionIndex = 0; $sectionIndex -lt $sectionCount; $sectionIndex++) {
         $sectionOffset = $sections + $sectionIndex * 40

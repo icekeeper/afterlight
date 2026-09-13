@@ -1,0 +1,19 @@
+Adapter: AMD Radeon RX 7900 XTX
+Internal resolution: 1920x1080
+Scene at 14s: mean=2.92233ms; maximum=3.0477ms
+Scene at 26s: mean=2.88755ms; maximum=4.3352ms
+Scene at 44s: mean=3.23094ms; maximum=3.5549ms
+Scene at 62s: mean=7.05678ms; maximum=7.7757ms
+Scene at 65.5s: mean=3.72018ms; maximum=4.2874ms
+Scene at 84s: mean=3.88126ms; maximum=5.1043ms
+Scene at 92s: mean=4.41341ms; maximum=5.2669ms
+Scene at 104s: mean=5.18932ms; maximum=5.374ms
+Scene at 114s: mean=5.5576ms; maximum=5.9711ms
+Scene at 123s: mean=6.01974ms; maximum=6.458ms
+Scene at 138s: mean=8.3146ms; maximum=8.8043ms
+Scene at 143.5s: mean=14.1763ms; maximum=15.6304ms
+Scene at 145.5s: mean=17.2468ms; maximum=17.8414ms
+Scene at 148s: mean=17.3997ms; maximum=18.1269ms
+Scene at 150s: mean=12.7015ms; maximum=13.0203ms
+Scene at 156s: mean=12.9018ms; maximum=13.1869ms
+Scene at 168s: mean=13.7328ms; maximum=14.2359ms

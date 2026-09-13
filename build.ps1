@@ -1,7 +1,9 @@
 [CmdletBinding()]
 param(
     [string]$ZigPath = '',
-    [switch]$DownloadToolchain
+    [string]$UpXPath = '',
+    [switch]$DownloadToolchain,
+    [switch]$Unpacked
 )
 
 $ErrorActionPreference = 'Stop'
@@ -39,7 +41,26 @@ if (-not (Test-Path -LiteralPath $ZigPath -PathType Leaf)) {
 }
 $ZigPath = (Resolve-Path -LiteralPath $ZigPath).Path
 
-foreach ($source in @('main.cpp', 'soundtrack.cpp', 'soundtrack.h', 'scene.hlsl', 'shader-compile.cpp', 'resources.rc', 'verify-imports.ps1')) {
+if (-not $Unpacked) {
+    $upxVersion = '5.2.1'
+    $upxArchiveName = "upx-$upxVersion-win64"
+    if (-not $UpXPath) { $UpXPath = Join-Path $toolsDirectory "$upxArchiveName\upx.exe" }
+    if (-not (Test-Path -LiteralPath $UpXPath -PathType Leaf)) {
+        if (-not $DownloadToolchain) { throw 'UPX 5.2.1 was not found. Run .\build.ps1 -DownloadToolchain, pass -UpXPath, or use -Unpacked.' }
+        $upxArchive = Join-Path $toolsDirectory "$upxArchiveName.zip"
+        if (-not (Test-Path -LiteralPath $upxArchive)) {
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            Invoke-WebRequest -Uri "https://github.com/upx/upx/releases/download/v$upxVersion/$upxArchiveName.zip" -OutFile $upxArchive -UseBasicParsing
+        }
+        if ((Get-FileHash -LiteralPath $upxArchive -Algorithm SHA256).Hash -ne 'eabc6792a347d45e945be7748423e7868fd01b0d2bcaa2f4b1031fd71ff69bda') { throw 'The UPX archive failed SHA-256 verification.' }
+        Expand-Archive -LiteralPath $upxArchive -DestinationPath $toolsDirectory -Force
+    }
+    $UpXPath = (Resolve-Path -LiteralPath $UpXPath).Path
+    $upxIdentity = (& $UpXPath --version | Out-String).Trim()
+    if ($LASTEXITCODE -ne 0 -or $upxIdentity -notmatch '^upx 5\.2\.1\b') { throw "Expected UPX 5.2.1; received '$upxIdentity'." }
+}
+
+foreach ($source in @('main.cpp', 'file-output.h', 'soundtrack.cpp', 'soundtrack.h', 'scene.hlsl', 'shader-compile.cpp', 'resources.rc', 'verify-imports.ps1')) {
     if (-not (Test-Path -LiteralPath (Join-Path $projectRoot $source) -PathType Leaf)) {
         throw "Missing source file: $source"
     }
@@ -56,19 +77,7 @@ try {
         throw "This build expects Zig $zigVersion; received '$actualVersion'."
     }
 
-    $utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
     $shaderCache = Join-Path $buildDirectory 'scene_bytecode.h'
-    $shaderInputs = @(Get-ChildItem -LiteralPath $projectRoot -Filter 'scene*.hlsl') + @(Get-Item -LiteralPath (Join-Path $projectRoot 'shader-compile.cpp')) + @(Get-Item -LiteralPath $PSCommandPath)
-    $shaderNeedsBuild = -not (Test-Path -LiteralPath $shaderCache)
-    if (-not $shaderNeedsBuild) {
-        $cacheTime = (Get-Item -LiteralPath $shaderCache).LastWriteTimeUtc
-        $shaderNeedsBuild = @($shaderInputs | Where-Object { $_.LastWriteTimeUtc -gt $cacheTime }).Count -gt 0
-    }
-    if ($shaderNeedsBuild) {
-    Write-Host 'Compiling the scene shader...'
-    & $ZigPath c++ -target x86_64-windows-gnu -std=c++17 -O2 -static 'shader-compile.cpp' '-ld3dcompiler_47' -o 'build/shader-compile.exe'
-    if ($LASTEXITCODE -ne 0) { throw "Shader compiler build failed (exit $LASTEXITCODE)." }
-    $bytecodeHeader = "#pragma once`n"
     $shaderPrograms = @(
         @('scene.hlsl', 'SceneBytecode', 'PSMain', 'ps_4_0'),
         @('scene_volume_cache.hlsl', 'NurseryBytecode', 'PSMain', 'ps_4_0'),
@@ -76,40 +85,91 @@ try {
         @('scene_particles.hlsl', 'FragmentVertexBytecode', 'VSMain', 'vs_4_0'),
         @('scene_particles.hlsl', 'FragmentPixelBytecode', 'PSMain', 'ps_4_0')
     )
+    # Cache compiled GPU programs separately from their packed representation:
+    # changing native build/packing options does not recompile the large shader.
+    $shaderInputs = @(Get-ChildItem -LiteralPath $projectRoot -Filter 'scene*.hlsl') + @(Get-Item -LiteralPath (Join-Path $projectRoot 'shader-compile.cpp'))
+    $newestShaderInput = ($shaderInputs | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 1).LastWriteTimeUtc
+    $shaderConfiguration = ($shaderPrograms | ForEach-Object { $_ -join ' ' }) -join "`n"
+    $shaderConfigurationPath = Join-Path $buildDirectory 'shader-config.txt'
+    $shaderNeedsBuild = -not (Test-Path -LiteralPath $shaderConfigurationPath)
+    if (-not $shaderNeedsBuild) { $shaderNeedsBuild = [IO.File]::ReadAllText($shaderConfigurationPath) -ne $shaderConfiguration }
     foreach ($program in $shaderPrograms) {
         $binary = Join-Path $buildDirectory ($program[1] + '.cso')
-        & (Join-Path $buildDirectory 'shader-compile.exe') $program[0] $binary $program[2] $program[3]
-        if ($LASTEXITCODE -ne 0) { throw "Shader compilation failed for $($program[1]) (exit $LASTEXITCODE)." }
-        $compiledShader = [System.IO.File]::ReadAllBytes($binary)
-        $shaderBytecodeText = '0x' + [BitConverter]::ToString($compiledShader).Replace('-', ',0x')
-        $bytecodeHeader += "static const unsigned char $($program[1])[] = {`n" + $shaderBytecodeText + "`n};`n"
+        if (-not (Test-Path -LiteralPath $binary) -or (Get-Item -LiteralPath $binary).LastWriteTimeUtc -lt $newestShaderInput) { $shaderNeedsBuild = $true }
     }
-    [System.IO.File]::WriteAllText((Join-Path $buildDirectory 'scene_bytecode.h'), $bytecodeHeader, $utf8WithoutBom)
-    } else { Write-Host 'Reusing the compiled scene shader.' }
+    if ($shaderNeedsBuild) {
+        Write-Host 'Compiling the scene shaders...'
+        & $ZigPath c++ -target x86_64-windows-gnu -std=c++17 -O2 -static 'shader-compile.cpp' '-ld3dcompiler_47' -o 'build/shader-compile.exe'
+        if ($LASTEXITCODE -ne 0) { throw "Shader compiler build failed (exit $LASTEXITCODE)." }
+        foreach ($program in $shaderPrograms) {
+            $binary = Join-Path $buildDirectory ($program[1] + '.cso')
+            & (Join-Path $buildDirectory 'shader-compile.exe') $program[0] $binary $program[2] $program[3]
+            if ($LASTEXITCODE -ne 0) { throw "Shader compilation failed for $($program[1]) (exit $LASTEXITCODE)." }
+        }
+        [IO.File]::WriteAllText($shaderConfigurationPath, $shaderConfiguration)
+    } else { Write-Host 'Reusing the compiled scene shaders.' }
+
+    $packInputs = @(Get-Item -LiteralPath $PSCommandPath)
+    foreach ($program in $shaderPrograms) {
+        $binary = Join-Path $buildDirectory ($program[1] + '.cso')
+        $packInputs += Get-Item -LiteralPath $binary
+    }
+    $packNeedsBuild = -not (Test-Path -LiteralPath $shaderCache)
+    if (-not $packNeedsBuild) {
+        $cacheTime = (Get-Item -LiteralPath $shaderCache).LastWriteTimeUtc
+        $packNeedsBuild = @($packInputs | Where-Object { $_.LastWriteTimeUtc -gt $cacheTime }).Count -gt 0
+    }
+    if ($packNeedsBuild) {
+        Write-Host 'Embedding the compiled shaders...'
+        # Pack code and raw bytecode together at the final executable stage;
+        # compressing the shaders separately gives a larger combined result.
+        $bytecodeHeader = "#pragma once`n"
+        foreach ($program in $shaderPrograms) {
+            $compiledShader = [IO.File]::ReadAllBytes((Join-Path $buildDirectory ($program[1] + '.cso')))
+            $shaderBytecodeText = '0x' + [BitConverter]::ToString($compiledShader).Replace('-', ',0x')
+            $bytecodeHeader += "static const unsigned char $($program[1])[] = {`n$shaderBytecodeText`n};`n"
+        }
+        [IO.File]::WriteAllText("$shaderCache.new", $bytecodeHeader, (New-Object Text.UTF8Encoding($false)))
+        Move-Item -LiteralPath "$shaderCache.new" -Destination $shaderCache -Force
+    } else { Write-Host 'Reusing the embedded shader bytecode.' }
 
     Write-Host 'Compiling Windows resources...'
     & $ZigPath rc '/:auto-includes' 'none' '/fo' 'build/afterlight.res' 'resources.rc'
     if ($LASTEXITCODE -ne 0) { throw "Resource compilation failed (exit $LASTEXITCODE)." }
 
     Write-Host 'Building AFTERLIGHT for Windows 11 x64...'
+    # Minimize our code, but retain speed-optimized support libraries at link
+    # time. Building the entire runtime for size slowed frame readback ~2 ms.
+    foreach ($source in @('main', 'soundtrack')) {
+        & $ZigPath c++ -target x86_64-windows-gnu -std=c++17 -Oz -flto -s '-DUNICODE' '-D_UNICODE' '-DWIN32_LEAN_AND_MEAN' '-DNOMINMAX' '-Ibuild' -c "$source.cpp" -o "build/$source.o"
+        if ($LASTEXITCODE -ne 0) { throw "Compilation failed for $source (exit $LASTEXITCODE)." }
+    }
     $compilerArguments = @(
-        'c++', '-target', 'x86_64-windows-gnu', '-std=c++17', '-O2', '-static', '-Wl,--subsystem,windows',
-        '-DUNICODE', '-D_UNICODE', '-DWIN32_LEAN_AND_MEAN', '-DNOMINMAX',
-        '-Ibuild', 'main.cpp', 'soundtrack.cpp', 'build/afterlight.res',
+        'c++', '-target', 'x86_64-windows-gnu', '-O2', '-flto', '-s', '-static', '-Wl,--subsystem,windows',
+        'build/main.o', 'build/soundtrack.o', 'build/afterlight.res',
         '-ld3d11', '-ldxgi', '-ld3dcompiler_47', '-lwinmm', '-lgdi32', '-luser32', '-lole32', '-luuid',
-        '-o', 'dist/AFTERLIGHT.exe'
+        '-o', 'build/AFTERLIGHT-unpacked.exe'
     )
     & $ZigPath @compilerArguments
     if ($LASTEXITCODE -ne 0) { throw "C++ compilation failed (exit $LASTEXITCODE)." }
 
-    & (Join-Path $projectRoot 'verify-imports.ps1') -Executable (Join-Path $distDirectory 'AFTERLIGHT.exe') -Summary
+    & (Join-Path $projectRoot 'verify-imports.ps1') -Executable (Join-Path $buildDirectory 'AFTERLIGHT-unpacked.exe') -Summary
+    if ($Unpacked) {
+        Copy-Item -LiteralPath (Join-Path $buildDirectory 'AFTERLIGHT-unpacked.exe') -Destination (Join-Path $distDirectory 'AFTERLIGHT.exe') -Force
+    } else {
+        Write-Host 'Compressing the complete executable...'
+        & $UpXPath --best --lzma --strip-relocs=0 --compress-resources=0 --force-overwrite -o 'dist/AFTERLIGHT.exe' 'build/AFTERLIGHT-unpacked.exe'
+        if ($LASTEXITCODE -ne 0) { throw "Executable compression failed (exit $LASTEXITCODE)." }
+        & $UpXPath -t 'dist/AFTERLIGHT.exe'
+        if ($LASTEXITCODE -ne 0) { throw 'Packed executable integrity check failed.' }
+    }
 
     Copy-Item -LiteralPath (Join-Path $projectRoot 'README.md') -Destination (Join-Path $distDirectory 'README.md') -Force
     Copy-Item -LiteralPath (Join-Path $projectRoot 'docs') -Destination $distDirectory -Recurse -Force
     $licensePath=Join-Path $projectRoot 'LICENSE'
     if(Test-Path -LiteralPath $licensePath){Copy-Item -LiteralPath $licensePath -Destination $distDirectory -Force}
     $executable = Get-Item -LiteralPath (Join-Path $distDirectory 'AFTERLIGHT.exe')
-    Write-Host ("Built {0} ({1:N2} MB)" -f $executable.FullName, ($executable.Length / 1MB))
+    Write-Host ("Built {0} ({1:N0} bytes; {2:N1} KiB)" -f $executable.FullName, $executable.Length, ($executable.Length / 1KB))
 } finally {
     Pop-Location
     $env:ZIG_GLOBAL_CACHE_DIR = $previousGlobalCache

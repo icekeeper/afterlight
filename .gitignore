@@ -1,5 +1,6 @@
 # Downloaded development tools (the scripts in tools/ are source).
 /tools/zig-*/
+/tools/upx-*/
 /tools/ffmpeg/
 /tools/*.zip
 # Generated files and local captures.

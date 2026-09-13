@@ -1,0 +1,234 @@
+{
+  "BaselineBytes": 1689088,
+  "CandidateBytes": 164352,
+  "ReductionPercent": 90.27,
+  "BaselineSHA256": "0CDC52D2326C0240DA9BABC04E653AE094A5C29F3BFB5A8872CBB4611BD1A8C4",
+  "CandidateSHA256": "C12B14AEDDDF64643D4C6D6EFB8C7342EE481921D0C18D5701F0FB8CBDD89D33",
+  "Passed": true,
+  "Cases": [
+    {
+      "Case": "score",
+      "Passed": true,
+      "Identical": false,
+      "Audio": {
+        "MaximumSampleError": 1.0,
+        "ChangedSamples": 12575.0,
+        "SignalToErrorDB": 104.787455048233
+      },
+      "BaselineElapsedMs": 1165.9807,
+      "CandidateElapsedMs": 1182.4737,
+      "BaselineSHA256": "2717BE329E286D2FFB36DC240776C52CF2DBED4B7AB420AB967CC4BC8C5D5EB0",
+      "CandidateSHA256": "4472F1E1F4FFD32C19B2520A25082143AA2F0F8FA58E80D6DA9AD6D1C5C0F741"
+    },
+    {
+      "Case": "frame-14-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 3105.458,
+      "CandidateElapsedMs": 3063.763,
+      "BaselineSHA256": "B7D24A621989CE1F0FB85957726C26BF7953E51F884C9160B296FF14902DA3A2",
+      "CandidateSHA256": "B7D24A621989CE1F0FB85957726C26BF7953E51F884C9160B296FF14902DA3A2"
+    },
+    {
+      "Case": "frame-44-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 3104.4619,
+      "CandidateElapsedMs": 3064.2291,
+      "BaselineSHA256": "B1D8A668CEAF178E39D051765795E91049F3B17CA51DEDDE708666A418824847",
+      "CandidateSHA256": "B1D8A668CEAF178E39D051765795E91049F3B17CA51DEDDE708666A418824847"
+    },
+    {
+      "Case": "frame-62-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 3085.0225,
+      "CandidateElapsedMs": 3053.1553,
+      "BaselineSHA256": "3493AA40A6510EC30E48EC04978F1444A8FCE0011585FB801F930E7F37D513CC",
+      "CandidateSHA256": "3493AA40A6510EC30E48EC04978F1444A8FCE0011585FB801F930E7F37D513CC"
+    },
+    {
+      "Case": "frame-65.9-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 3034.5612,
+      "CandidateElapsedMs": 3121.4996,
+      "BaselineSHA256": "419E232CFEB4EC47B9CE17EE6E01CDDD6A070188013A758E17727D67C8AE2418",
+      "CandidateSHA256": "419E232CFEB4EC47B9CE17EE6E01CDDD6A070188013A758E17727D67C8AE2418"
+    },
+    {
+      "Case": "frame-66-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 3074.2142,
+      "CandidateElapsedMs": 3053.6742,
+      "BaselineSHA256": "7282AD6FF84F59842DFCD215D37B3F2047ACE2411ECB2A0C00205792B88A2646",
+      "CandidateSHA256": "7282AD6FF84F59842DFCD215D37B3F2047ACE2411ECB2A0C00205792B88A2646"
+    },
+    {
+      "Case": "frame-84-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 3067.3246,
+      "CandidateElapsedMs": 3061.9845,
+      "BaselineSHA256": "0712AD601F09547B6C9942CD31F32AD3AA231242ADD13764FEB3D934386EA0D7",
+      "CandidateSHA256": "0712AD601F09547B6C9942CD31F32AD3AA231242ADD13764FEB3D934386EA0D7"
+    },
+    {
+      "Case": "frame-98-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 3066.8414,
+      "CandidateElapsedMs": 2963.8092,
+      "BaselineSHA256": "17C4768368C67E6B7B1B3FFACACD2628F187C98F5ADEE025560F00960468E85C",
+      "CandidateSHA256": "17C4768368C67E6B7B1B3FFACACD2628F187C98F5ADEE025560F00960468E85C"
+    },
+    {
+      "Case": "frame-114-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 3006.5833,
+      "CandidateElapsedMs": 2983.3734,
+      "BaselineSHA256": "EF41D339E0E64BA1D330F8C17250A6F527BC928383E12D3EB832B77F35A62CC2",
+      "CandidateSHA256": "EF41D339E0E64BA1D330F8C17250A6F527BC928383E12D3EB832B77F35A62CC2"
+    },
+    {
+      "Case": "frame-117.9-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 3123.0689,
+      "CandidateElapsedMs": 3012.7672,
+      "BaselineSHA256": "A194A6779C1D84033E142A8A515A59A8E3FDBA2F073682AF18940F06701E5E98",
+      "CandidateSHA256": "A194A6779C1D84033E142A8A515A59A8E3FDBA2F073682AF18940F06701E5E98"
+    },
+    {
+      "Case": "frame-118-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 3001.2372,
+      "CandidateElapsedMs": 2942.7963,
+      "BaselineSHA256": "42E8BBB94D109AD541AEBD0A9FD59F4B776A5563D14A7D9EE8096C73D83C2069",
+      "CandidateSHA256": "42E8BBB94D109AD541AEBD0A9FD59F4B776A5563D14A7D9EE8096C73D83C2069"
+    },
+    {
+      "Case": "frame-140-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 2965.3963,
+      "CandidateElapsedMs": 3035.3986,
+      "BaselineSHA256": "3C368092DC6D9C1EAF8ACCC21D89AEC1F787DC84357DAAEED4C823714D96CC33",
+      "CandidateSHA256": "3C368092DC6D9C1EAF8ACCC21D89AEC1F787DC84357DAAEED4C823714D96CC33"
+    },
+    {
+      "Case": "frame-145.5-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 3075.9942,
+      "CandidateElapsedMs": 2965.8634,
+      "BaselineSHA256": "6559D83D5C6B8B2CED6D91E13F3E17EAD276ACB0C5C75E1A51CC00B7BE06EE02",
+      "CandidateSHA256": "6559D83D5C6B8B2CED6D91E13F3E17EAD276ACB0C5C75E1A51CC00B7BE06EE02"
+    },
+    {
+      "Case": "frame-149.9-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 3108.9717,
+      "CandidateElapsedMs": 2993.1825,
+      "BaselineSHA256": "4A85F1296A0744318B5FC014E89CFF048B1B72C29A232518D3A263759CF101F4",
+      "CandidateSHA256": "4A85F1296A0744318B5FC014E89CFF048B1B72C29A232518D3A263759CF101F4"
+    },
+    {
+      "Case": "frame-150-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 2994.5971,
+      "CandidateElapsedMs": 2975.8788,
+      "BaselineSHA256": "02F0E389CFD28C2D21B0F94125C3447A5B14010A1964980D1170FF34B6082DC9",
+      "CandidateSHA256": "02F0E389CFD28C2D21B0F94125C3447A5B14010A1964980D1170FF34B6082DC9"
+    },
+    {
+      "Case": "frame-156-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 2970.6566,
+      "CandidateElapsedMs": 3079.6653,
+      "BaselineSHA256": "28488A35CAD54175ACAE61C05658B33B45E67550FD472A2793D51F1DF2579D63",
+      "CandidateSHA256": "28488A35CAD54175ACAE61C05658B33B45E67550FD472A2793D51F1DF2579D63"
+    },
+    {
+      "Case": "frame-168-1080p",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 3010.0933,
+      "CandidateElapsedMs": 2990.6697,
+      "BaselineSHA256": "7B48118604DD782E321B5667E93B49B9585EEC5878F9417ABF72EE089F9B576D",
+      "CandidateSHA256": "7B48118604DD782E321B5667E93B49B9585EEC5878F9417ABF72EE089F9B576D"
+    },
+    {
+      "Case": "menu",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 2943.1416,
+      "CandidateElapsedMs": 3064.0577,
+      "BaselineSHA256": "3599FEAB6011729FCF93BD4F0DCFDA4CAA4941C2D2787C1BCC5CDDA5F9F55ACF",
+      "CandidateSHA256": "3599FEAB6011729FCF93BD4F0DCFDA4CAA4941C2D2787C1BCC5CDDA5F9F55ACF"
+    },
+    {
+      "Case": "quality-1",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 2974.0743,
+      "CandidateElapsedMs": 3040.9604,
+      "BaselineSHA256": "A90EE2EC882E85969A19D226B0F7A471BE1BAF3C66047F1016EEA49E36116128",
+      "CandidateSHA256": "A90EE2EC882E85969A19D226B0F7A471BE1BAF3C66047F1016EEA49E36116128"
+    },
+    {
+      "Case": "quality-2",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 2991.5022,
+      "CandidateElapsedMs": 3026.7089,
+      "BaselineSHA256": "4BF6E8655B0EBA55A919768022C0D7C3C17CDD6678EA4018897C5FBF742A8928",
+      "CandidateSHA256": "4BF6E8655B0EBA55A919768022C0D7C3C17CDD6678EA4018897C5FBF742A8928"
+    },
+    {
+      "Case": "warp-65.95",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 796.5634,
+      "CandidateElapsedMs": 799.0501,
+      "BaselineSHA256": "7A7FB542954F33C4629B7D1C0E467C91883CF8E6A0D6BDC3D92F02301CA0EDBF",
+      "CandidateSHA256": "7A7FB542954F33C4629B7D1C0E467C91883CF8E6A0D6BDC3D92F02301CA0EDBF"
+    },
+    {
+      "Case": "warp-146",
+      "Passed": true,
+      "Identical": true,
+      "Audio": null,
+      "BaselineElapsedMs": 1727.8534,
+      "CandidateElapsedMs": 1623.2631,
+      "BaselineSHA256": "20E187F9E287F4B6C45609A664C12A7AC04EF8CE14B0515D9E7B3E217245C8DF",
+      "CandidateSHA256": "20E187F9E287F4B6C45609A664C12A7AC04EF8CE14B0515D9E7B3E217245C8DF"
+    }
+  ]
+}

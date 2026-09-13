@@ -9,7 +9,8 @@ The Windows executable is built using Zig 0.13.0 and statically links the C++ an
 - [LLVM unwinding runtime](licenses/libunwind.txt): Apache License 2.0 with LLVM exceptions and historical notices.
 - [mingw-w64](licenses/mingw-w64.txt): upstream Windows runtime notice.
 - [Zig](licenses/zig.txt): compiler and Zig runtime notice.
+- [UPX license and executable exception](licenses/upx-license.txt), with its [GPL text](licenses/upx-gpl.txt): the official, unmodified UPX 5.2.1 compresses the executable and supplies its startup decompression stub. The exception permits free use and distribution of compressed programs, including commercial programs. AFTERLIGHT's original content remains CC0.
 
-The downloaded Zig and FFmpeg development tool distributions are not checked into this repository or included in its Windows release package. FFmpeg and Node.js are optional tools for producing and checking preview videos; neither is a runtime dependency of AFTERLIGHT. Windows graphics, audio and system DLLs are supplied by Windows, not redistributed here.
+The downloaded Zig, UPX and FFmpeg development tool distributions are not checked into this repository or included in its Windows release package. The packed executable includes UPX's decompression stub; the UPX command-line tool is not needed to play it. FFmpeg and Node.js are optional tools for producing and checking preview videos; neither is a runtime dependency of AFTERLIGHT. Windows graphics, audio and system DLLs are supplied by Windows, not redistributed here.
 
 The research links in [RESEARCH.md](RESEARCH.md) acknowledge technical inspiration. No assets or rendering engine from those demos are bundled.

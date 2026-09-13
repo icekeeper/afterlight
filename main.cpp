@@ -11,19 +11,16 @@
 #include <dxgi.h>
 #include <algorithm>
 #include <atomic>
-#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
-#include <fstream>
-#include <iomanip>
-#include <sstream>
 #include <stdexcept>
 #include <string>
-#include <thread>
+#include <process.h>
 #include <vector>
 #include "soundtrack.h"
 #include "scene_bytecode.h"
+#include "file-output.h"
 
 // AFTERLIGHT: no asset files, middleware, browser or runtime installation.
 // All graphics and audio use APIs shipped with Windows 11.
@@ -370,8 +367,7 @@ struct Renderer {
         auto p=ReadFrame(); for(auto& c:p) c=(c&0xFF00FF00)|((c&255)<<16)|((c>>16)&255);
         BITMAPFILEHEADER fh{}; BITMAPINFOHEADER ih{}; fh.bfType=0x4D42; fh.bfOffBits=sizeof(fh)+sizeof(ih); fh.bfSize=fh.bfOffBits+DWORD(p.size()*4);
         ih.biSize=sizeof(ih); ih.biWidth=width; ih.biHeight=-LONG(height); ih.biPlanes=1; ih.biBitCount=32; ih.biCompression=BI_RGB;
-        std::ofstream out(path,std::ios::binary); out.write((char*)&fh,sizeof(fh)); out.write((char*)&ih,sizeof(ih)); out.write((char*)p.data(),p.size()*4);
-        if(!out) throw std::runtime_error("Could not write capture: "+path);
+        FileOutput out(path.c_str()); out.Write(&fh,sizeof(fh)); out.Write(&ih,sizeof(ih)); out.Write(p.data(),p.size()*4); out.Close();
     }
     ~Renderer() {
         if(context) context->ClearState(); if(dc) { SelectObject(dc,oldBitmap); DeleteObject(bitmap); DeleteDC(dc); }
@@ -387,7 +383,7 @@ struct Renderer {
 
 struct App {
     HWND hwnd=nullptr; Renderer renderer; Audio audio;
-    std::atomic<bool> ready{false}; std::thread synth; std::string synthError;
+    std::atomic<bool> ready{false}; HANDLE synth=nullptr; std::string synthError;
     bool running=true,menu=true,ended=false,hud=false,fullscreen=false,initialized=false,transportReady=false;
     bool minimized=false,noAudio=false; RECT savedRect{}; double noticeUntil=0;
     void Begin() { if(!transportReady) return; menu=false; ended=false; audio.Play(0); }
@@ -408,7 +404,18 @@ struct App {
         if(k==VK_SPACE||k==VK_RETURN) { if(menu||ended) Begin(); else audio.Pause(); }
         if((k==VK_RIGHT||k==VK_LEFT)&&!menu) { double t=std::clamp(audio.Time()+(k==VK_RIGHT?10.:-10.),0.,179.9); audio.Play(t); ended=false; }
     }
-    ~App() { if(synth.joinable()) synth.join(); }
+    static unsigned __stdcall Synthesize(void* opaque) {
+        auto& app=*static_cast<App*>(opaque);
+        try { app.audio.samples=Afterlight::GenerateSoundtrack(); }
+        catch(const std::exception& e) { app.synthError=e.what(); }
+        app.ready=true;
+        return 0;
+    }
+    void StartSynthesizer() {
+        synth=reinterpret_cast<HANDLE>(_beginthreadex(nullptr,0,Synthesize,this,0,nullptr));
+        if(!synth) throw std::runtime_error("Cannot start soundtrack synthesis thread");
+    }
+    ~App() { if(synth) { WaitForSingleObject(synth,INFINITE); CloseHandle(synth); } }
 };
 static LRESULT CALLBACK WindowProc(HWND h,UINT m,WPARAM w,LPARAM l) {
     App* app=reinterpret_cast<App*>(GetWindowLongPtr(h,GWLP_USERDATA));
@@ -431,9 +438,8 @@ static LRESULT CALLBACK WindowProc(HWND h,UINT m,WPARAM w,LPARAM l) {
     return DefWindowProc(h,m,w,l);
 }
 static void SaveWav(const std::string& path,const std::vector<int16_t>& samples) {
-    std::ofstream f(path,std::ios::binary); auto u32=[&](uint32_t v){ f.write((char*)&v,4); }; auto u16=[&](uint16_t v){f.write((char*)&v,2);};
-    uint32_t length=uint32_t(samples.size()*2); f.write("RIFF",4);u32(length+36);f.write("WAVEfmt ",8);u32(16);u16(1);u16(2);u32(Afterlight::SampleRate);u32(Afterlight::SampleRate*4);u16(4);u16(16);f.write("data",4);u32(length);f.write((char*)samples.data(),length);
-    if(!f) throw std::runtime_error("Could not write soundtrack WAV");
+    FileOutput f(path.c_str()); auto u32=[&](uint32_t v){ f.Write(&v,4); }; auto u16=[&](uint16_t v){f.Write(&v,2);};
+    uint32_t length=uint32_t(samples.size()*2); f.Write("RIFF",4);u32(length+36);f.Write("WAVEfmt ",8);u32(16);u16(1);u16(2);u32(Afterlight::SampleRate);u32(Afterlight::SampleRate*4);u16(4);u16(16);f.Write("data",4);u32(length);f.Write(samples.data(),length); f.Close();
 }
 int WINAPI WinMain(HINSTANCE instance,HINSTANCE,LPSTR,int) {
     SetProcessDPIAware();
@@ -472,25 +478,26 @@ int WINAPI WinMain(HINSTANCE instance,HINSTANCE,LPSTR,int) {
                 }
             }
             if(benchmark) {
-                std::ofstream report("build/benchmark.txt");report<<"Adapter: "<<app.renderer.adapter<<"\nInternal resolution: "<<app.renderer.renderWidth<<"x"<<app.renderer.renderHeight<<"\n";
+                FileOutput report("build/benchmark.txt");report.Print("Adapter: %s\nInternal resolution: %ux%u\n",app.renderer.adapter.c_str(),app.renderer.renderWidth,app.renderer.renderHeight);
                 for(double start:{14.,26.,44.,62.,65.5,84.,92.,104.,114.,123.,138.,143.5,145.5,148.,150.,156.,168.}) {
                     app.renderer.UI(start,false,true,false,false,false,false,false,0);
                     for(int i=0;i<3;i++){app.renderer.Draw(start,false);app.renderer.ReadFrame();}
                     double total=0,worst=0;const int count=30;
                     for(int i=0;i<count;i++) {double begin=Clock();app.renderer.Draw(start+i/30.,false);app.renderer.ReadFrame();double ms=(Clock()-begin)*1000.;total+=ms;worst=std::max(worst,ms);}
-                    report<<"Scene at "<<start<<"s: mean="<<total/count<<"ms; maximum="<<worst<<"ms\n";report.flush();
+                    report.Print("Scene at %gs: mean=%gms; maximum=%gms\n",start,total/count,worst);report.Flush();
                 }
+                report.Close();
             }
             DestroyWindow(app.hwnd);return 0;
         }
         if(selftest||capture) {
-            std::ofstream report; if(selftest) { report.open("build/self-test.txt");report<<"AFTERLIGHT native validation\nAdapter: "<<app.renderer.adapter<<"\nSoftware: "<<app.renderer.software<<"\n"; }
+            FileOutput report(selftest?"build/self-test.txt":nullptr); if(selftest) report.Print("AFTERLIGHT native validation\nAdapter: %s\nSoftware: %d\n",app.renderer.adapter.c_str(),int(app.renderer.software));
             if(capture) { app.renderer.UI(captureTime,menuCapture,true,false,captureTime>=180,false,false,false,0);app.renderer.Draw(captureTime,menuCapture);app.renderer.SaveBMP(capturePath); }
             if(selftest) {
                 for(double t:{3.,14.,24.,29.,30.,31.,38.,44.,54.,60.,62.,64.,65.,66.,67.,72.,76.,84.,92.,100.,107.,108.,109.,114.,118.,120.,123.,136.,140.,143.,144.,145.,150.,156.,168.,177.}) {
                     app.renderer.UI(t,false,true,false,t>=180,false,false,false,0);double begin=Clock();app.renderer.Draw(t,false);
                     auto p=app.renderer.ReadFrame();double sum=0;size_t lit=0;for(uint32_t c:p) {double v=((c&255)+((c>>8)&255)+((c>>16)&255))/3.;sum+=v;if(v>10)lit++;}
-                    report<<"Frame "<<t<<"s: mean="<<sum/p.size()<<" lit="<<double(lit)/p.size()<<" render_ms="<<(Clock()-begin)*1000<<"\n";
+                    report.Print("Frame %gs: mean=%g lit=%g render_ms=%g\n",t,sum/p.size(),double(lit)/p.size(),(Clock()-begin)*1000);
                     if(t<174&&lit<p.size()/100) throw std::runtime_error("Self-test: unexpectedly blank scene");
                 }
                 // Infinitesimal time changes must not expose a renderer/pass
@@ -504,15 +511,18 @@ int WINAPI WinMain(HINSTANCE instance,HINSTANCE,LPSTR,int) {
                     for(size_t i=0;i<before.size();i++)for(int shift:{0,8,16})
                         difference+=std::abs(int((before[i]>>shift)&255)-int((after[i]>>shift)&255));
                     difference/=before.size()*3.;
-                    report<<"Continuity at "<<boundary<<"s: mean RGB difference="<<difference<<" / 255\n";report.flush();
+                    report.Print("Continuity at %gs: mean RGB difference=%g / 255\n",boundary,difference);report.Flush();
                     if(difference>1.0)throw std::runtime_error("Self-test: discontinuity at renderer handoff");
                 }
-                double begin=Clock();auto music=Afterlight::GenerateSoundtrack(); double peak=0,sum=0; size_t clips=0;
+                double begin=Clock();app.StartSynthesizer();
+                if(WaitForSingleObject(app.synth,INFINITE)!=WAIT_OBJECT_0 || !app.ready) throw std::runtime_error("Self-test: synthesis thread failed");
+                if(!app.synthError.empty()) throw std::runtime_error(app.synthError);
+                auto music=std::move(app.audio.samples); double peak=0,sum=0; size_t clips=0;
                 for(int16_t n:music) {double x=n/32768.;peak=std::max(peak,std::abs(x));sum+=x*x;if(n==32767||n==-32768)clips++;}
-                report<<"Audio: samples="<<music.size()<<" peak="<<peak<<" rms="<<sqrt(sum/music.size())<<" clipped="<<clips<<" generation_seconds="<<Clock()-begin<<"\n";
+                report.Print("Audio: samples=%zu peak=%g rms=%g clipped=%zu generation_seconds=%g\n",music.size(),peak,sqrt(sum/music.size()),clips,Clock()-begin);
                 if(music.size()!=size_t(Afterlight::Duration*Afterlight::SampleRate)*2||clips||peak<.01) throw std::runtime_error("Self-test: invalid soundtrack");
-                app.audio.samples=std::move(music); bool audioOpen=app.audio.Open();report<<"waveOut device: "<<(audioOpen?"available":"unavailable (visual-only fallback)")<<"\n";
-                if(audioOpen) { app.audio.Play(0); Sleep(140); double before=app.audio.Time();app.audio.Pause();Sleep(100);double held=app.audio.Time();app.audio.Pause();Sleep(100);double resumed=app.audio.Time();app.audio.Play(90);Sleep(100);double sought=app.audio.Time();app.audio.Stop();report<<"Audio clock: before="<<before<<" paused="<<held<<" resumed="<<resumed<<" seek="<<sought<<"\n";if(before<=0||std::abs(held-before)>.04||resumed<=held||sought<90||sought>91)throw std::runtime_error("Self-test: audio transport clock failed");}
+                app.audio.samples=std::move(music); bool audioOpen=app.audio.Open();report.Print("waveOut device: %s\n",audioOpen?"available":"unavailable (visual-only fallback)");
+                if(audioOpen) { app.audio.Play(0); Sleep(140); double before=app.audio.Time();app.audio.Pause();Sleep(100);double held=app.audio.Time();app.audio.Pause();Sleep(100);double resumed=app.audio.Time();app.audio.Play(90);Sleep(100);double sought=app.audio.Time();app.audio.Stop();report.Print("Audio clock: before=%g paused=%g resumed=%g seek=%g\n",before,held,resumed,sought);if(before<=0||std::abs(held-before)>.04||resumed<=held||sought<90||sought>91)throw std::runtime_error("Self-test: audio transport clock failed");}
                 app.renderer.SetQuality(1);app.renderer.Resize(960,600);app.renderer.Draw(44,false);auto resized=app.renderer.ReadFrame();
                 if(resized.size()!=960*600||app.renderer.renderHeight!=540)throw std::runtime_error("Self-test: resolution switching failed");
                 app.renderer.Draw(92,false); app.renderer.ReadFrame();
@@ -522,13 +532,14 @@ int WINAPI WinMain(HINSTANCE instance,HINSTANCE,LPSTR,int) {
                 app.renderer.Draw(168,false);app.renderer.ReadFrame();
                 app.renderer.Draw(92,false);auto returnVisit=app.renderer.ReadFrame();
                 if(firstVisit!=returnVisit)throw std::runtime_error("Self-test: procedural seeking depends on frame history");
-                report<<"Deterministic seek: fragment frame 92s identical after visiting nursery at 168s\n";
-                report<<"Resolution changes: 540p and 1080p rendered; 960x600 letterboxed resize passed\nPASS\n";
+                report.Print("Deterministic seek: fragment frame 92s identical after visiting nursery at 168s\n");
+                report.Print("Resolution changes: 540p and 1080p rendered; 960x600 letterboxed resize passed\nPASS\n");
+                report.Close();
             }
             DestroyWindow(app.hwnd); return 0;
         }
         ShowWindow(app.hwnd,SW_SHOW); UpdateWindow(app.hwnd);
-        app.synth=std::thread([&] { try {app.audio.samples=Afterlight::GenerateSoundtrack();}catch(const std::exception& e){app.synthError=e.what();} app.ready=true; });
+        app.StartSynthesizer();
         bool opened=false; double uiLast=-1,menuStart=Clock();
         while(app.running) {
             MSG msg; while(PeekMessageW(&msg,nullptr,0,0,PM_REMOVE)) {if(msg.message==WM_QUIT)app.running=false;TranslateMessage(&msg);DispatchMessageW(&msg);}
@@ -543,7 +554,8 @@ int WINAPI WinMain(HINSTANCE instance,HINSTANCE,LPSTR,int) {
         }
         app.audio.Stop();DestroyWindow(app.hwnd);return 0;
     } catch(const std::exception& e) {
-        std::ofstream log("afterlight-error.txt"); log<<e.what()<<"\n";
+        // Error reporting must not throw if the current directory is read-only.
+        if(FILE* log=fopen("afterlight-error.txt","wb")) { fprintf(log,"%s\n",e.what()); fclose(log); }
         if(!selftest&&!capture&&!sequence&&!benchmark)MessageBoxA(nullptr,e.what(),"AFTERLIGHT",MB_OK|MB_ICONERROR);
         return 1;
     }
